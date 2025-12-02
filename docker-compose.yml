@@ -1,6 +1,5 @@
 services:
   # 1. Offline Store (PostgreSQL + PostGIS)
-  # Stores all historical data for Training (Phase 2 & 3)
   db:
     image: postgis/postgis:16-3.4
     container_name: routematch_db
@@ -15,7 +14,6 @@ services:
       - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
   # 2. Online Store (Redis)
-  # Serves live driver locations and features for Inference
   redis:
     image: redis:7-alpine
     container_name: routematch_redis
@@ -24,6 +22,18 @@ services:
     volumes:
       - redis_data:/data
 
+  # 3. Redis GUI (Added) - PRO TIP: View your cache in the browser
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: routematch_redis_gui
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    volumes:
+      - redisinsight_data:/data
+
 volumes:
   postgres_data:
   redis_data:
+  redisinsight_data:
