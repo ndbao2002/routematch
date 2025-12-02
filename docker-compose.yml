@@ -1,0 +1,29 @@
+services:
+  # 1. Offline Store (PostgreSQL + PostGIS)
+  # Stores all historical data for Training (Phase 2 & 3)
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: routematch_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=routematch
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  # 2. Online Store (Redis)
+  # Serves live driver locations and features for Inference
+  redis:
+    image: redis:7-alpine
+    container_name: routematch_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

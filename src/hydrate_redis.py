@@ -1,0 +1,58 @@
+import redis
+import pandas as pd
+import os
+
+# Connect to Redis
+# If running outside Docker, host='localhost'. Inside, host='redis'
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+r = redis.Redis(host=REDIS_HOST, port=6379, db=0, decode_responses=True)
+
+def hydrate():
+    print(f"🔌 Connecting to Redis at {REDIS_HOST}...")
+    try:
+        r.ping()
+    except redis.ConnectionError:
+        print("❌ Redis not reachable. Is Docker running?")
+        return
+
+    print("💧 Hydrating Drivers...")
+    df_drivers = pd.read_csv("data/raw/drivers.csv")
+    
+    # Fake initial locations (Just to make them queryable)
+    # In real life, this comes from live GPS stream
+    center_lat, center_lon = 10.762622, 106.660172
+    
+    pipe = r.pipeline()
+    count = 0
+    
+    for _, row in df_drivers.iterrows():
+        d_id = row['driver_id']
+        
+        # 1. Geo Index (Random start location near city center)
+        import numpy as np
+        lat = center_lat + np.random.normal(0, 0.05)
+        lon = center_lon + np.random.normal(0, 0.05)
+        
+        pipe.geoadd("drivers:geo", (lon, lat, d_id))
+        
+        # 2. Profile (Static Features)
+        pipe.hset(f"driver:{d_id}:profile", mapping={
+            "vehicle_type": row['vehicle_type'],
+            "max_load_kg": row['max_load_kg']
+        })
+        
+        # 3. Initial State
+        pipe.hset(f"driver:{d_id}:state", mapping={
+            "status": "IDLE",
+            "fatigue_index": 0.0
+        })
+        
+        count += 1
+        if count % 500 == 0:
+            pipe.execute()
+            
+    pipe.execute()
+    print(f"✅ Hydrated {count} drivers.")
+
+if __name__ == "__main__":
+    hydrate()
