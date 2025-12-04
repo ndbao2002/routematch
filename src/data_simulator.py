@@ -102,8 +102,21 @@ def generate_orders(n=10000):
         service = np.random.choice(["standard", "fast", "prioritize"], p=[0.6, 0.3, 0.1])
         
         # 3. Context
-        # Rain logic: Mostly late afternoon (16-19)
-        is_raining = 1 if (hour >= 16 and hour <= 19 and random.random() < 0.35) else 0
+        # Improved Rain Logic (Probabilistic)
+        # Base probability for any hour (Ho Chi Minh City is tropical!)
+        rain_prob = 0.05 
+        
+        if 14 <= hour <= 19:
+            # Peak Rain: Afternoon/Evening squalls
+            rain_prob += 0.25  # Total ~30%
+        elif 12 <= hour < 14:
+            # Early afternoon buildup
+            rain_prob += 0.15  # Total ~20%
+        elif 20 <= hour <= 23:
+            # Lingering night rain
+            rain_prob += 0.05  # Total ~10%
+
+        is_raining = 1 if random.random() < rain_prob else 0
         
         # 4. Geography (Consistent)
         pickup_lat = CENTER_LAT + np.random.normal(0, 0.03)
@@ -116,11 +129,12 @@ def generate_orders(n=10000):
         dropoff_lat, dropoff_lon = get_destination_point(pickup_lat, pickup_lon, dist_km, bearing)
         
         # 5. Pricing (Commission included)
-        base_price = 15000 if req_vehicle == "bike" else 150000
+        base_price = 15000 if req_vehicle == "bike" else 130000 if req_vehicle == "truck_500" else 200000
         per_km = 5000 if req_vehicle == "bike" else 15000
         price = base_price + (dist_km * per_km)
         
         if service == "prioritize": price *= 3.0 # Urgent = Expensive
+        if service == "fast": price *= 2.0
         if is_raining: price *= 1.3
             
         # 6. COD (Cash On Delivery)
