@@ -24,6 +24,8 @@ dependencies = [
 dev = [
     "black>=25.11.0",
     "ipykernel>=7.1.0",
+    "matplotlib>=3.10.7",
+    "seaborn>=0.13.2",
 ]
 
 # --- ADDITIONS BELOW ---
