@@ -10,7 +10,7 @@ import math
 # CONFIGURATION
 # ===========================
 NUM_DRIVERS = 2000
-NUM_ORDERS = 50000
+NUM_ORDERS = 200000
 START_DATE = datetime(2024, 1, 1)
 
 # HCM City Coordinates (District 1 Center)
@@ -88,7 +88,7 @@ def generate_orders(n=10000):
     hours_prob /= hours_prob.sum()
 
     for i in range(n):
-        order_id = f"O_{str(uuid.uuid4())[:8]}"
+        order_id = f"O_{str(uuid.uuid4())[:13]}"
         
         # 1. Time Simulation
         hour = np.random.choice(range(24), p=hours_prob)
