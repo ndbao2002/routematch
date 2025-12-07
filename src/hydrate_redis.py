@@ -38,13 +38,17 @@ def hydrate():
         # 2. Profile (Static Features)
         pipe.hset(f"driver:{d_id}:profile", mapping={
             "vehicle_type": row['vehicle_type'],
-            "max_load_kg": row['max_load_kg']
+            "max_load_kg": row['max_load_kg'],
+            "joined_date": row['joined_date']
         })
         
         # 3. Initial State
         pipe.hset(f"driver:{d_id}:state", mapping={
             "status": "IDLE",
-            "fatigue_index": 0.0
+            "minutes_active": 0,
+            "fatigue_index": 0.0,
+            "cancel_rate": 0.0,
+            "orders_completed": 0
         })
         
         count += 1
