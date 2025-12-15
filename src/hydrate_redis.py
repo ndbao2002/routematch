@@ -33,7 +33,7 @@ def hydrate():
         lat = center_lat + np.random.normal(0, 0.05)
         lon = center_lon + np.random.normal(0, 0.05)
         
-        pipe.geoadd("drivers:geo", (lon, lat, d_id))
+        pipe.geoadd(f"drivers:geo:{row['vehicle_type']}", (lon, lat, d_id))
         
         # 2. Profile (Static Features)
         pipe.hset(f"driver:{d_id}:profile", mapping={
