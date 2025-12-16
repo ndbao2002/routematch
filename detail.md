@@ -3,7 +3,6 @@
 **Objective:** Create a realistic data environment that simulates "Business Friction" (Rain, Traffic, Fatigue).
 
 ### 1.1 Relational Schema Design (PostgreSQL)
-
 - Design normalized tables: `drivers`, `orders`, `interaction_logs` (logs of offers).
 - Implement **PostGIS** extension for geospatial queries.
 - **Key Challenge:** Design the `interaction_logs` table to capture *Negative Samples* (rejected offers), not just completed bookings.
@@ -43,8 +42,20 @@
 - **Output:** Generate ~320k+ interaction rows for robust training.
 
 ### 1.3 Online Feature Store (Redis)
-
 - Design Redis Key Schema for O(1) access:
     - `driver:geo:{vehicle_type}` -> `GEOADD` (Lat, Lon) -> This design help retrieving process to be faster.
     - `driver:{id}:profile` -> Hash Map (Vehicle Type, Max Load, Joined Date)
     - `driver:{id}:state` -> Hash Map (Status, MinutesActive, FatigueIndex, CancelRate, OrdersCompleted)
+
+## 🗓️ Phase 2: The Retrieval Engine
+
+**Objective:** Efficiently filter 2k drivers down to 100 candidates in < 10ms.
+
+### 2.1 Geospatial Indexing (Redis)
+- Since we store drivers location, state and profile on Redis, we will leverage this for fast retrieving.
+- Redis has built-in function which help retrieve drivers within a radius from long/lat, also, it's run on RAM so this would minimize the time to fetch features.
+
+### 2.2 Feature Fetching Pipeline
+- Build a Python `RetrievalService` client.
+- Fetch features for all 100 candidates in a single Redis Pipeline batch request and incremental query from 1km -> 3km -> 5km -> 10km (minimizing RTT). 
+- Average time to fetch feature is about 4.5ms
