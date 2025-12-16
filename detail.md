@@ -45,6 +45,6 @@
 ### 1.3 Online Feature Store (Redis)
 
 - Design Redis Key Schema for O(1) access:
-    - `driver:{id}:geo` -> `GEOADD` (Lat, Lon)
+    - `driver:geo:{vehicle_type}` -> `GEOADD` (Lat, Lon) -> This design help retrieving process to be faster.
     - `driver:{id}:profile` -> Hash Map (Vehicle Type, Max Load, Joined Date)
     - `driver:{id}:state` -> Hash Map (Status, MinutesActive, FatigueIndex, CancelRate, OrdersCompleted)
