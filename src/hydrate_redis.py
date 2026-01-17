@@ -1,6 +1,7 @@
 import redis
 import pandas as pd
 import os
+import h3
 
 # Connect to Redis
 # If running outside Docker, host='localhost'. Inside, host='redis'
@@ -25,7 +26,7 @@ def hydrate():
     pipe = r.pipeline()
     count = 0
     
-    for _, row in df_drivers.iterrows():
+    for index, row in df_drivers.iterrows():
         d_id = row['driver_id']
         
         # 1. Geo Index (Random start location near city center)
@@ -33,7 +34,11 @@ def hydrate():
         lat = center_lat + np.random.normal(0, 0.05)
         lon = center_lon + np.random.normal(0, 0.05)
         
-        pipe.geoadd(f"drivers:geo:{row['vehicle_type']}", (lon, lat, d_id))
+        # Add to Geo index per vehicle type
+        # This should also include H3 indexing in a real system
+        RESOLUTION = 8
+        h3_index = h3.latlng_to_cell(lat, lon, RESOLUTION)
+        pipe.zadd(f"drivers:h3:{h3_index}:{row['vehicle_type']}", {d_id: index})
         
         # 2. Profile (Static Features)
         pipe.hset(f"driver:{d_id}:profile", mapping={
@@ -48,7 +53,9 @@ def hydrate():
             "minutes_active": 0,
             "fatigue_index": 0.0,
             "cancel_rate": 0.0,
-            "orders_completed": 0
+            "orders_completed": 0,
+            "lat": lat,
+            "lon": lon
         })
         
         count += 1
