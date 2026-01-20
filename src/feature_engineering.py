@@ -76,7 +76,9 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.merge(driver_stats, on='driver_id', how='left')
 
     # Cleanup: Drop raw IDs that leak info or cause overfitting
-    drop_cols = ['user_id', 'created_at', 'offered_at'] # Keep order_id/driver_id for debugging
+    # Also, drop columns not needed for modeling (noise, redundancy, etc)
+    drop_cols = ['user_id', 'created_at', 'offered_at', 'order_id', 'driver_id', 'pickup_lat', 'pickup_lon',
+                 'driver_lat', 'driver_lon', 'hour_of_day', 'dropoff_lat', 'dropoff_lon', 'pickup_h3']
     df.drop(columns=[c for c in drop_cols if c in df.columns], inplace=True)
     
     print(f"✅ Finished. Feature Count: {len(df.columns)}")

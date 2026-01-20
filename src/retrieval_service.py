@@ -63,9 +63,9 @@ class RetrievalService:
                 features['fatigue_index'] = float(features.get('fatigue_index', 0.0))
                 features['orders_completed'] = int(features.get('orders_completed', 0)) 
                 features['cancel_rate'] = float(features.get('cancel_rate', 0.0))
-                features['lat'] = float(features.get('lat', 0.0))
-                features['lon'] = float(features.get('lon', 0.0))
-                features['distance_km'] = h3.great_circle_distance((lat, lon), (features['lat'], features['lon']), unit='km')
+                features['driver_lat'] = float(features.get('lat', 0.0))
+                features['driver_lon'] = float(features.get('lon', 0.0))
+                features['driver_distance_to_pickup'] = h3.great_circle_distance((lat, lon), (features['driver_lat'], features['driver_lon']), unit='km')
                 # Add to final list
                 candidates_data.append(features)
 
