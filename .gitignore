@@ -4,8 +4,12 @@ __pycache__/
 build/
 dist/
 wheels/
-data/
 *.egg-info
 
 # Virtual environments
 .venv
+
+# Project files
+data/
+models/
+logs/
