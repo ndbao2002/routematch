@@ -61,3 +61,33 @@
 - Query Redis for drivers in the same H3 cell, if insufficient, expand to neighboring cells.
 - Filter drivers by `vehicle_type` and `status` (only 'available' drivers).
 - Return at least 5 drivers, up to 100 drivers, unsorted.
+
+## 🗓️ Phase 3: The Ranking Engine
+
+**Objective:** Accurately predict `P(Accept)` using Tabular ML.
+
+### 3.1 Feature Engineering (The "Mid-Level" Skill)
+
+- Create **Interaction Features**:
+    - `driver_global_accept_rate`: Overall acceptance rate of the driver, calculated with bayesian smoothing (this also solves cold-start problem).
+    - `distance_to_pickup`: Geodesic distance between Driver and Order.
+    - `price_per_km`: Unit economics of the order.
+    - `h3_demand_60m`: Number of orders in the same H3 cell in the last 60 minutes.
+    - `hour_sin`, `hour_cos`: To capture time-of-day cyclic patterns.
+
+### 3.2 Model Training (XGBoost/Logistic Regression)
+
+- Train a Binary Classifier.
+- Compare models:
+    - **Baseline:** Logistic Regression.
+    - **Advanced:** XGBoost with hyperparameter tuning (max_depth, learning_rate, n_estimators, subsample, colsample_bytree).
+- **No need for Class Imbalance Handling:** Since the acceptance rate is around ~60%, the dataset is relatively balanced.
+- **Evaluation:**
+    - Primary Metric: **AUC-ROC**.
+    - Business Metric: **Recall@k** (Is the acceptor in the top k predictions?).
+
+### 3.3 Model Calibration
+
+- Compare predicted probabilities with actual acceptance rates on both Logistic Regression and XGBoost.
+- Plot calibration curves, see that Logistic Regression is overconfident while XGBoost is better calibrated (it hugs the diagonal).
+- Since XGBoost is already well-calibrated, no further calibration steps are necessary.
