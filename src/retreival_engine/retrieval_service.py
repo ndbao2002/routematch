@@ -31,7 +31,7 @@ class RetrievalService:
 
                 candidate_ids.extend(r.zrange(search_key, 0, self.max_candidates - 1, withscores=False))
                 
-            if len(candidate_ids) >= 5: # Threshold: If we found enough, stop expanding
+            if len(candidate_ids) >= 25: # Threshold: If we found enough, stop expanding
                 print(f"  > Found {len(candidate_ids)} drivers within {k}-ring.")
                 break
             else:
@@ -56,7 +56,7 @@ class RetrievalService:
 
         # 3. Merge IDs with Features
         for driver_id, features in zip(candidate_ids, features_list):
-            if features: # Ensure driver key actually existed
+            if features and features.get('status') == 'IDLE': # Ensure driver key actually existed and driver is IDLE
                 # Convert strings to proper types (Redis stores everything as string)
                 features['driver_id'] = driver_id
                 features['minutes_active'] = int(features.get('minutes_active', 0))

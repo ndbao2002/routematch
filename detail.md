@@ -91,3 +91,21 @@
 - Compare predicted probabilities with actual acceptance rates on both Logistic Regression and XGBoost.
 - Plot calibration curves, see that Logistic Regression is overconfident while XGBoost is better calibrated (it hugs the diagonal).
 - Since XGBoost is already well-calibrated, no further calibration steps are necessary.
+
+## 🗓️ Phase 4: The "Agentic" Logic & Cold Start
+
+**Objective:** Solve the "New Driver Problem" and apply business constraints.
+
+### 4.1 Cold Start Solution (Exploration vs Exploitation)
+
+- Initial Idea: **Upper Confidence Bound (UCB)**.
+- Refined Solution: **Bayesian Smoothing**.
+- Logic:
+    - Calculate `smoothed_accept_rate = ((C * global_accept_rate) + number_of_accepts) / (C + total_requests)`.
+- *Effect:* New drivers default to Global Mean, ensuring fair opportunity without complex logic.
+
+### 4.2 Business Rules Engine
+
+- Implement a rigid filter *before* ranking:
+    - **Service Requirement:** Filter if Order needs "truck_500" but Driver is "bike".
+    - **Driver Availability:** Filter if Driver is not 'IDLE'.
