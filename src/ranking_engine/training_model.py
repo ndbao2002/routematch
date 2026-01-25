@@ -140,6 +140,9 @@ if __name__ == "__main__":
         exit()
         
     df = pd.read_csv("data/processed/feature_data.csv")
+    # Let's sort columns for consistency
+    df = df.reindex(sorted(df.columns), axis=1)
+    print(f"Columns in dataset: {df.columns.tolist()}")
 
     # Time-based Split
     split_idx = int(len(df) * 0.8)

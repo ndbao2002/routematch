@@ -109,3 +109,52 @@
 - Implement a rigid filter *before* ranking:
     - **Service Requirement:** Filter if Order needs "truck_500" but Driver is "bike".
     - **Driver Availability:** Filter if Driver is not 'IDLE'.
+
+## 🗓️ Phase 5: Production Engineering
+
+### 5.1 FastAPI Microservice
+
+- Endpoint: `POST /predict/batch`.
+- Payload: `Order Details, Precalculation Features`.
+- Response: `{"driver_id": "D_123", "score": 0.85`.
+
+### 5.2 The Flow (FIFO)
+
+1. Order Ingestion: Passenger requests enter a MATCHING_QUEUE (Kafka/RabbitMQ).
+2. Immediate Consumption: The Dispatch Service picks up orders one by one (FIFO).
+3. Candidate Search: Query Redis GEO to find the nearest ~20 drivers (radius search).
+4. Scoring (ML): The Service calls the RouteMatch Scoring API for these 20 candidates.
+5. Greedy Selection: Sort candidates by prob_accept (Highest First).
+6. Locking & Offer: Attempt to lock the #1 Driver. If successful, send the offer. If they reject, move to #2.
+
+![Architecture Diagram](arch.png)
+
+### 5.3 Feature Store Design (Offline vs. Online)
+
+| **Feature Type**   | **Training Source (Pandas)**  | **Production Source (Redis)** | **Update Mechanism**                                                      |
+| ------------------ | ----------------------------- | ----------------------------- | ------------------------------------------------------------------------- |
+| **Driver History** | Bayesian Smoothing via Pandas | `Hash: driver:{id}:stats`     | Updated asynchronously via Kafka Consumer after every trip completion.    |
+| **H3 Demand**      | `rolling('60min')`            | `ZSET: demand:h3:{cell_id}`   | Updated in real-time on every order creation. ZREMRANGE removes old data. |
+
+### 5.4. Concurrency & Locking
+
+**Problem**: Two separate order processors might try to grab the same driver for two different orders at the exact same millisecond.
+
+**Solution**: **Redis Redlock** Before sending the offer, the Dispatch Service performs an atomic check:
+
+```
+SET lock:driver:{driver_id} "order:{order_id}" NX EX 30
+```
+
+If `SET` returns `NULL`, the driver is busy. We immediately move to the next best driver in our sorted list.
+
+### 5.5. Future Roadmap: Global Optimization (Batch Matching)
+
+While the current FIFO system is fast, it suffers from **Local Optimization** (e.g., assigning a driver to Order A who was the only option for Order B).
+
+**Planned Upgrade**: **Micro-Batching (Bipartite Matching)** In the next phase of RouteMatch, we plan to implement a 5-second windowing strategy:
+
+1. Accumulate: Wait 5 seconds to collect a batch of orders (e.g., 10 orders).
+2. Cost Matrix: Build a matrix where Cost = 1 - Probability.
+3. Hungarian Algorithm: Solve the assignment problem to maximize the total probability of acceptance across all orders.
+4. Trade-off: This adds ~5s latency but theoretically improves the overall platform fulfillment rate (**Recall@5**).
