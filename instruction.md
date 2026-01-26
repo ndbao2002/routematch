@@ -1,13 +1,20 @@
+**Data Simulation:**
+```bash
+uv run src/simulation/data_simulator.py
+```
+
+**Start Services:**
 ```bash
 docker-compose up -d
     *Wait 10s for Postgres to initialize.*
 ```
 
+**Hydrate Redis:**
 ```bash
-uv run src/data_simulator.py
+uv run src/hydrate_redis.py
 ```
 
-**Load DB (Manual Copy for now):**
+**Load DB (Manual Copy):**
 ```bash
 docker cp data/raw/drivers.csv routematch_db:/tmp/drivers.csv
 docker cp data/raw/orders.csv routematch_db:/tmp/orders.csv
@@ -18,7 +25,13 @@ docker exec -i routematch_db psql -U postgres -d routematch -c "\copy orders(ord
 docker exec -i routematch_db psql -U postgres -d routematch -c "\copy interaction_logs(order_id, driver_id, driver_lat, driver_lon, driver_distance_to_pickup, driver_fatigue_index, is_accepted, offered_at) FROM '/tmp/interaction_logs.csv' DELIMITER ',' CSV HEADER;"
 ```
 
-**Hydrate Redis:**
+**UI Access:**
 ```bash
-uv run src/hydrate_redis.py
+Grafana - http://localhost:3000 (admin/admin)
+RedisInsight - http://localhost:5540
+```
+
+**Traffic Routing Simulation:**
+```bash
+uv run src/simulation/generation.py
 ```
