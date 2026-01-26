@@ -52,8 +52,9 @@ def hydrate():
             "status": "IDLE",
             "minutes_active": 0,
             "fatigue_index": 0.0,
-            "cancel_rate": 0.0,
-            "orders_completed": 0,
+            "total_offers": 0,
+            "total_accepts": 0,
+            "driver_global_accept_rate": 0.60,
             "lat": lat,
             "lon": lon
         })

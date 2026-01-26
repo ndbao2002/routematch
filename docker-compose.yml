@@ -22,7 +22,7 @@ services:
     volumes:
       - redis_data:/data
 
-  # 3. Redis GUI (Added) - PRO TIP: View your cache in the browser
+  # 3. Redis GUI (RedisInsight)
   redisinsight:
     image: redis/redisinsight:latest
     container_name: routematch_redis_gui
@@ -32,6 +32,49 @@ services:
       - redis
     volumes:
       - redisinsight_data:/data
+  # 4. Monitoring Stack (Prometheus + Grafana)
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitor/prometheus.yml:/etc/prometheus/prometheus.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Allows access to your python script on localhost
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  # 5. The ML Model API (Brain)
+  model-api:
+    build: .  # Uses the Dockerfile in current dir
+    container_name: routematch_model
+    command: uvicorn app.model:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models # Mount models so we don't need to rebuild to update weights
+    depends_on:
+      - redis
+
+  # 6. The Dispatch Orchestrator (Client API)
+  dispatch-service:
+    build: . # Uses the SAME Dockerfile
+    container_name: routematch_dispatcher
+    command: uvicorn app.client:app --host 0.0.0.0 --port 9000
+    ports:
+      - "9000:9000"
+    environment:
+      # Use the docker service name 'model-api', not localhost
+      - MODEL_API_URL=http://model-api:8000/predict/batch
+      - REDIS_HOST=redis
+    depends_on:
+      - model-api
+      - redis
 
 volumes:
   postgres_data:
