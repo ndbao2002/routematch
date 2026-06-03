@@ -23,6 +23,8 @@ CREATE TABLE orders (
     order_id VARCHAR(20) PRIMARY KEY,
     user_id VARCHAR(20),
     created_at TIMESTAMP,
+    status VARCHAR(32) NOT NULL DEFAULT 'accumulating',
+    status_updated_at TIMESTAMP,
     
     -- Geospatial Data
     pickup_lat DOUBLE PRECISION,
@@ -54,6 +56,7 @@ CREATE TABLE interaction_logs (
     interaction_id SERIAL PRIMARY KEY,
     order_id VARCHAR(20) REFERENCES orders(order_id),
     driver_id VARCHAR(20) REFERENCES drivers(driver_id),
+    attempt_count INT NOT NULL DEFAULT 1,
     
     -- State Context (What the driver saw)
     driver_lat DOUBLE PRECISION,
@@ -70,7 +73,25 @@ CREATE TABLE interaction_logs (
 );
 
 -- =============================================
--- 4. PERFORMANCE INDEXES
+-- 4. ORDER STATE AUDIT (Operational History)
+-- Captures state machine transitions for gateway polling and dispatch retries
+-- =============================================
+CREATE TABLE order_state_transitions (
+    transition_id SERIAL PRIMARY KEY,
+    order_id VARCHAR(20) REFERENCES orders(order_id),
+
+    from_status VARCHAR(32),
+    to_status VARCHAR(32) NOT NULL,
+
+    driver_id VARCHAR(20) REFERENCES drivers(driver_id),
+    attempt_count INT,
+    reason VARCHAR(255),
+
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- =============================================
+-- 5. PERFORMANCE INDEXES
 -- =============================================
 -- Spatial Index for Phase 2 Retrieval
 CREATE INDEX idx_orders_pickup ON orders USING gist (ST_MakePoint(pickup_lon, pickup_lat));
@@ -78,3 +99,6 @@ CREATE INDEX idx_orders_pickup ON orders USING gist (ST_MakePoint(pickup_lon, pi
 -- Feature Lookup Indexes
 CREATE INDEX idx_drivers_vehicle ON drivers(vehicle_type);
 CREATE INDEX idx_interactions_driver ON interaction_logs(driver_id);
+CREATE INDEX idx_interactions_order_attempt ON interaction_logs(order_id, attempt_count);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_order_state_transitions_order ON order_state_transitions(order_id, created_at);

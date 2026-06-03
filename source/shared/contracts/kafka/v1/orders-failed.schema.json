@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://routematch.local/contracts/kafka/v1/orders-failed.schema.json",
+  "title": "OrdersFailed v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["order_id", "reason", "attempt_count", "failed_at"],
+  "properties": {
+    "order_id": { "type": "string" },
+    "reason": {
+      "type": "string"
+    },
+    "attempt_count": { "type": "integer", "minimum": 1 },
+    "failed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

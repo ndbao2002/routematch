@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://routematch.local/contracts/kafka/v1/order-requested.schema.json",
+  "title": "OrderRequested v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "order_id",
+    "user_id",
+    "pickup_lat",
+    "pickup_lon",
+    "dropoff_lat",
+    "dropoff_lon",
+    "requested_vehicle_type",
+    "service_type",
+    "cod_amount",
+    "shipping_fee",
+    "distance_km",
+    "is_raining",
+    "hour_of_day",
+    "attempt_count"
+  ],
+  "properties": {
+    "order_id": { "type": "string" },
+    "user_id": { "type": "string" },
+    "pickup_lat": { "type": "number" },
+    "pickup_lon": { "type": "number" },
+    "dropoff_lat": { "type": "number" },
+    "dropoff_lon": { "type": "number" },
+    "requested_vehicle_type": {
+      "type": "string",
+      "enum": ["bike", "truck_500", "truck_1000"]
+    },
+    "service_type": {
+      "type": "string",
+      "enum": ["standard", "fast", "prioritize"]
+    },
+    "cod_amount": { "type": "number", "minimum": 0 },
+    "shipping_fee": { "type": "number", "minimum": 0 },
+    "distance_km": { "type": "number", "minimum": 0 },
+    "is_raining": { "type": "boolean" },
+    "hour_of_day": { "type": "integer", "minimum": 0, "maximum": 23 },
+    "attempt_count": { "type": "integer", "minimum": 1 }
+  }
+}

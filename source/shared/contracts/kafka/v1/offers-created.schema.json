@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://routematch.local/contracts/kafka/v1/offers-created.schema.json",
+  "title": "OffersCreated v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["order_id", "driver_id", "offer_id", "attempt_count", "expires_at"],
+  "properties": {
+    "order_id": { "type": "string" },
+    "driver_id": { "type": "string" },
+    "offer_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "attempt_count": { "type": "integer", "minimum": 1 },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lock_ttl_seconds": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

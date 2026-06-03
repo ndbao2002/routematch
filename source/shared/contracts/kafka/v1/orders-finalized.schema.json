@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://routematch.local/contracts/kafka/v1/orders-finalized.schema.json",
+  "title": "OrdersFinalized v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["order_id", "driver_id", "matched_at", "attempt_count"],
+  "properties": {
+    "order_id": { "type": "string" },
+    "driver_id": { "type": "string" },
+    "matched_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "attempt_count": { "type": "integer", "minimum": 1 },
+    "final_status": {
+      "type": "string",
+      "enum": ["matched"]
+    }
+  }
+}

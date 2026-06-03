@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://routematch.local/contracts/kafka/v1/driver-responses.schema.json",
+  "title": "DriverResponses v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["order_id", "driver_id", "offer_id", "response", "responded_at"],
+  "properties": {
+    "order_id": { "type": "string" },
+    "driver_id": { "type": "string" },
+    "offer_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "response": {
+      "type": "string",
+      "enum": ["accepted", "rejected", "timeout"]
+    },
+    "responded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reason": {
+      "type": "string"
+    }
+  }
+}

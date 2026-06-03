@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://routematch.local/contracts/kafka/v1/matched-assignments.schema.json",
+  "title": "MatchedAssignments v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["batch_id", "assignments"],
+  "properties": {
+    "batch_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "assignments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["order_id", "driver_id", "score", "attempt_count"],
+        "properties": {
+          "order_id": { "type": "string" },
+          "driver_id": { "type": "string" },
+          "score": { "type": "number", "minimum": 0, "maximum": 1 },
+          "attempt_count": { "type": "integer", "minimum": 1 },
+          "rank": { "type": "integer", "minimum": 1 }
+        }
+      }
+    }
+  }
+}
