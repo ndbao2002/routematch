@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package routematch.shared.proto.v1;
+
+service DriverStateService {
+  rpc GetCandidates(GetCandidatesRequest) returns (GetCandidatesResponse);
+}
+
+message GetCandidatesRequest {
+  string correlation_id = 1;
+  string order_id = 2;
+  double pickup_lat = 3;
+  double pickup_lon = 4;
+  double search_radius_meters = 5;
+  string requested_vehicle_type = 6;
+  int32 limit = 7;
+  int32 attempt_count = 8;
+  repeated string rejected_driver_ids = 9;
+  string service_type = 10;
+  bool is_raining = 11;
+}
+
+message DriverCandidate {
+  string driver_id = 1;
+  string vehicle_type = 2;
+  int32 max_load_kg = 3;
+  double driver_lat = 4;
+  double driver_lon = 5;
+  double distance_to_pickup_meters = 6;
+  double fatigue_index = 7;
+  double accept_rate = 8;
+  double cancel_rate = 9;
+  int32 minutes_active = 10;
+  string status = 11;
+}
+
+message GetCandidatesResponse {
+  string correlation_id = 1;
+  string order_id = 2;
+  repeated DriverCandidate candidates = 3;
+  int32 returned_count = 4;
+  int32 requested_limit = 5;
+  int32 search_radius_meters = 6;
+  string status = 7;
+  string message = 8;
+}
