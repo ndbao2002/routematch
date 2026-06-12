@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 import uuid
 import logging
+import asyncio
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -18,6 +19,7 @@ from .service import (
     create_order_record,
     load_order_status_from_db,
 )
+from .worker import run_sync_worker
 
 LOG = logging.getLogger("order_gateway.api")
 logging.basicConfig(level=logging.INFO)
@@ -26,9 +28,16 @@ logging.basicConfig(level=logging.INFO)
 async def lifespan(_: FastAPI):
     await init_redis()
     await init_db()
+    
+    consumer_task = asyncio.create_task(run_sync_worker())
+    
     try:
         yield
     finally:
+        consumer_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await consumer_task
+            
         await close_db()
         await close_redis()
 
@@ -42,8 +51,8 @@ class OrderSubmit(BaseModel):
     pickup_lon: float
     dropoff_lat: float
     dropoff_lon: float
-    requested_vehicle_type: str = Field(..., regex="^(bike|truck_500|truck_1000)$")
-    service_type: str = Field(..., regex="^(standard|fast|prioritize)$")
+    requested_vehicle_type: str = Field(..., pattern="^(bike|truck_500|truck_1000)$")
+    service_type: str = Field(..., pattern="^(standard|fast|prioritize)$")
     cod_amount: float = 0.0
     shipping_fee: float = 0.0
     distance_km: float = None
@@ -53,7 +62,7 @@ class OrderSubmit(BaseModel):
 
 @app.post("/order/submit", status_code=202)
 async def submit_order(order: OrderSubmit):
-    order_id = str(uuid.uuid4())
+    order_id = uuid.uuid4().hex[:20]
     state = {"status": "accumulating", "attempt": 1}
     await set_order_status(order_id, state)
     await create_order_record(
