@@ -7,6 +7,7 @@ option go_package = "routematch/shared/libs/go/pb;pb";
 service DriverStateService {
   rpc GetCandidates(GetCandidatesRequest) returns (GetCandidatesResponse);
   rpc UpdateLocation(UpdateLocationRequest) returns (UpdateLocationResponse);
+  rpc BatchGetCandidates(BatchGetCandidatesRequest) returns (BatchGetCandidatesResponse);
 }
 
 message UpdateLocationRequest {
@@ -57,4 +58,27 @@ message GetCandidatesResponse {
   int32 search_radius_meters = 6;
   string status = 7;
   string message = 8;
+}
+
+message BatchGetCandidatesRequest {
+  string correlation_id = 1;
+  string requested_vehicle_type = 2;
+  int32 max_candidates = 3;
+  repeated OrderSearchQuery orders = 4;
+}
+
+message OrderSearchQuery {
+  string order_id = 1;
+  double pickup_lat = 2;
+  double pickup_lon = 3;
+  double search_radius_meters = 4;
+  repeated string rejected_driver_ids = 5;
+}
+
+message BatchGetCandidatesResponse {
+  string correlation_id = 1;
+  repeated DriverCandidate candidates = 2;
+  int32 returned_count = 3;
+  string status = 4;
+  string message = 5;
 }

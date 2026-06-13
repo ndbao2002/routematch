@@ -20,7 +20,7 @@ func NewDriverStateServer(redisClient *rdb.RedisClient) *DriverStateServer {
 }
 
 func (s *DriverStateServer) GetCandidates(ctx context.Context, req *pb.GetCandidatesRequest) (*pb.GetCandidatesResponse, error) {
-	candidates, err := s.redisClient.GetCandidateDrivers(ctx, req.PickupLat, req.PickupLon, req.RequestedVehicleType)
+	candidates, err := s.redisClient.GetCandidateDrivers(ctx, req.PickupLat, req.PickupLon, req.RequestedVehicleType, req.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +88,40 @@ func (s *DriverStateServer) UpdateLocation(ctx context.Context, req *pb.UpdateLo
 	return &pb.UpdateLocationResponse{
 		Success: true,
 		Message: "Successfully updated driver location",
+	}, nil
+}
+
+func (s *DriverStateServer) BatchGetCandidates(ctx context.Context, req *pb.BatchGetCandidatesRequest) (*pb.BatchGetCandidatesResponse, error) {
+	candidates, err := s.redisClient.GetBatchCandidateDrivers(ctx, req.RequestedVehicleType, req.MaxCandidates, req.Orders)
+	if err != nil {
+		return &pb.BatchGetCandidatesResponse{
+			Status:  "error",
+			Message: err.Error(),
+		}, nil
+	}
+
+	var eligibleCandidates []*pb.DriverCandidate
+	for _, cand := range candidates {
+		eligibleCandidates = append(eligibleCandidates, &pb.DriverCandidate{
+			DriverId:      cand.DriverID,
+			VehicleType:   cand.VehicleType,
+			MaxLoadKg:     cand.MaxLoadKG,
+			DriverLat:     cand.Lat,
+			DriverLon:     cand.Lon,
+			FatigueIndex:  cand.FatigueIndex,
+			AcceptRate:    cand.AcceptRate,
+			CancelRate:    cand.CancelRate,
+			MinutesActive: cand.MinutesActive,
+			Status:        cand.Status,
+		})
+	}
+
+	return &pb.BatchGetCandidatesResponse{
+		CorrelationId: req.CorrelationId,
+		Candidates:    eligibleCandidates,
+		ReturnedCount: int32(len(eligibleCandidates)),
+		Status:        "success",
+		Message:       "Successfully retrieved batch candidates",
 	}, nil
 }
 
