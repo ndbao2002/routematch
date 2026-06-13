@@ -121,6 +121,23 @@ services:
     networks:
       - routematch-net
 
+  driver-state:
+    build:
+      context: ../
+      dockerfile: services/driver-state/Dockerfile
+    container_name: routematch_ms_driver_state
+    environment:
+      - PORT=50051
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "50051:50051"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - routematch-net
+
 networks:
   routematch-net:
     driver: bridge
