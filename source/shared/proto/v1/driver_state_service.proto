@@ -2,8 +2,22 @@ syntax = "proto3";
 
 package routematch.shared.proto.v1;
 
+option go_package = "routematch/shared/libs/go/pb;pb";
+
 service DriverStateService {
   rpc GetCandidates(GetCandidatesRequest) returns (GetCandidatesResponse);
+  rpc UpdateLocation(UpdateLocationRequest) returns (UpdateLocationResponse);
+}
+
+message UpdateLocationRequest {
+  string driver_id = 1;
+  double lat = 2;
+  double lon = 3;
+}
+
+message UpdateLocationResponse {
+  bool success = 1;
+  string message = 2;
 }
 
 message GetCandidatesRequest {
