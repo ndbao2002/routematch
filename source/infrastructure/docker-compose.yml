@@ -138,6 +138,48 @@ services:
     networks:
       - routematch-net
 
+  mlflow:
+    image: ghcr.io/mlflow/mlflow
+    container_name: routematch_ms_mlflow
+    user: root
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////mlflow/mlflow.db --artifacts-destination /mlflow --serve-artifacts --allowed-hosts *
+    networks:
+      - routematch-net
+
+  ml-batch:
+    build:
+      context: ../
+      dockerfile: services/ml-batch/Dockerfile
+    container_name: routematch_ms_ml_batch
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DRIVER_STATE_GRPC_ADDR=driver-state:50051
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - WEIGHT_PROB=1.0
+      - WEIGHT_DISTANCE=0.1
+      - PORT=8080
+    volumes:
+      - ../../models:/workspace/services/ml-batch/models
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      driver-state:
+        condition: service_started
+      mlflow:
+        condition: service_started
+    networks:
+      - routematch-net
+
 networks:
   routematch-net:
     driver: bridge
@@ -146,3 +188,4 @@ volumes:
   db_data:
   redis_data:
   kafka_data:
+  mlflow_data:

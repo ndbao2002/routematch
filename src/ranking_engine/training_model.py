@@ -12,6 +12,19 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import roc_auc_score, brier_score_loss
 
+import mlflow
+import mlflow.sklearn
+import requests
+
+# Try to connect to local MLflow tracking server, fallback to local directory logging
+try:
+    resp = requests.get("http://localhost:5000", timeout=2)
+    if resp.status_code == 200:
+        mlflow.set_tracking_uri("http://localhost:5000")
+        print("🔗 Connected to MLflow tracking server at http://localhost:5000")
+except Exception:
+    print("⚠️ MLflow server not running at http://localhost:5000, logging to local mlruns/ directory")
+
 # ==========================================
 # 1. PREPROCESSING
 # ==========================================
@@ -124,10 +137,32 @@ def tune_xgboost_pipeline(X_train, y_train, X_test, y_test, df_test_full):
     print(f"   🚀 Tuned XGBoost AUC: {auc:.4f}")
     
     # RECALL @ K (Using df_test_full which still has order_id)
-    calculate_recall_at_k(df_test_full, y_prob, k=1)
-    calculate_recall_at_k(df_test_full, y_prob, k=3)
-    calculate_recall_at_k(df_test_full, y_prob, k=5)
+    recall1 = calculate_recall_at_k(df_test_full, y_prob, k=1)
+    recall3 = calculate_recall_at_k(df_test_full, y_prob, k=3)
+    recall5 = calculate_recall_at_k(df_test_full, y_prob, k=5)
     
+    # Log to MLflow
+    try:
+        mlflow.set_experiment("RouteMatch-Inference")
+        with mlflow.start_run():
+            # Log best params (cleaning keys for safety)
+            mlflow.log_params({k: v for k, v in search.best_params_.items()})
+            mlflow.log_metric("best_cv_score", float(search.best_score_))
+            mlflow.log_metric("test_auc", float(auc))
+            mlflow.log_metric("recall_at_1", float(recall1))
+            mlflow.log_metric("recall_at_3", float(recall3))
+            mlflow.log_metric("recall_at_5", float(recall5))
+            
+            # Log model to MLflow registry
+            mlflow.sklearn.log_model(
+                sk_model=best_model,
+                artifact_path="model",
+                registered_model_name="RouteMatchScoring"
+            )
+            print("💾 Successfully logged metrics and registered model in MLflow!")
+    except Exception as e:
+        print(f"⚠️ Failed to log run to MLflow: {e}")
+
     return best_model
 
 # ==========================================
