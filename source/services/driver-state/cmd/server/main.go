@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"routematch/driver-state/internal/config"
 	rdb "routematch/driver-state/internal/redis"
@@ -18,6 +21,16 @@ import (
 
 func main() {
 	log.Println("Initializing Driver State & Location Service...")
+
+	// Start Prometheus metrics server
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+		log.Printf("Starting Prometheus metrics server on :9092")
+		if err := http.ListenAndServe(":9092", mux); err != nil {
+			log.Printf("Metrics server error: %v", err)
+		}
+	}()
 	cfg := config.LoadConfig()
 
 	redisClient := rdb.NewRedisClient(cfg.RedisHost, cfg.RedisPort)

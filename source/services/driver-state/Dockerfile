@@ -1,5 +1,6 @@
 # Stage 1: Build
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
+
 
 # h3-go requires CGO_ENABLED=1 and gcc/make (build-base)
 RUN apk add --no-cache build-base git

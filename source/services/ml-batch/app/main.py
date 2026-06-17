@@ -36,11 +36,14 @@ async def lifespan(app: FastAPI):
         await consumer_worker.stop()
     logger.info("ML Batch & Optimization Service shutdown complete.")
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 app = FastAPI(
     title="ML Batch & Optimization Service",
     description="Consumes OrderRequested events, matches drivers using model scoring and Hungarian bipartite optimization.",
     lifespan=lifespan
 )
+Instrumentator().instrument(app).expose(app)
 
 @app.get("/health")
 def health_check():

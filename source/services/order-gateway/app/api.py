@@ -21,6 +21,8 @@ from .service import (
 )
 from .worker import run_sync_worker
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 LOG = logging.getLogger("order_gateway.api")
 logging.basicConfig(level=logging.INFO)
 
@@ -43,6 +45,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="RouteMatch - Order Gateway", lifespan=lifespan)
+Instrumentator().instrument(app).expose(app)
 
 
 class OrderSubmit(BaseModel):

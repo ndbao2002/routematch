@@ -132,6 +132,7 @@ services:
       - REDIS_PORT=6379
     ports:
       - "50051:50051"
+      - "9092:9092"
     depends_on:
       redis:
         condition: service_healthy
@@ -191,6 +192,8 @@ services:
       - DB_CONN_STR=postgres://postgres:postgres@db:5432/routematch?sslmode=disable
       - OFFER_TIMEOUT_SECONDS=15
       - MAX_ATTEMPTS=3
+    ports:
+      - "9091:9091"
     depends_on:
       kafka:
         condition: service_healthy
@@ -200,6 +203,7 @@ services:
         condition: service_healthy
     networks:
       - routematch-net
+
 
   order-gateway:
     build:
@@ -226,6 +230,27 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+    networks:
+      - routematch-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: routematch_ms_prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - routematch-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: routematch_ms_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
     networks:
       - routematch-net
 

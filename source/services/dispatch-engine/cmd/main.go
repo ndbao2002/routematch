@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"routematch/dispatch-engine/internal/config"
 	"routematch/dispatch-engine/internal/db"
@@ -18,6 +21,16 @@ import (
 
 func main() {
 	log.Printf("Starting Dispatch & State Machine Engine...")
+
+	// Start Prometheus metrics server
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+		log.Printf("Starting Prometheus metrics server on :9091")
+		if err := http.ListenAndServe(":9091", mux); err != nil {
+			log.Printf("Metrics server error: %v", err)
+		}
+	}()
 
 	cfg := config.LoadConfig()
 
