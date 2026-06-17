@@ -80,9 +80,12 @@ class KafkaBatchConsumer:
                 async with self.buffer_lock:
                     for tp, messages in msg_set.items():
                         for msg in messages:
-                            payload = msg.value
-                            if not payload or "order_id" not in payload:
-                                logger.warning("Received invalid order requested message: %s", payload)
+                            val = msg.value
+                            if not val:
+                                continue
+                            payload = val.get("payload") if isinstance(val, dict) and "payload" in val else val
+                            if not isinstance(payload, dict) or "order_id" not in payload:
+                                logger.warning("Received invalid order requested message: %s", val)
                                 continue
                             self.buffer.append(payload)
                     

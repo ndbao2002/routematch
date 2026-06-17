@@ -4,6 +4,8 @@ import asyncio
 import os
 import json
 import logging
+import uuid
+from datetime import datetime
 from typing import Optional
 
 import asyncpg
@@ -67,10 +69,20 @@ def publish_event(topic: str, payload: dict) -> None:
         LOG.info("[event:%s] %s", topic, payload)
         return
 
-    url = f"{PANDAPROXY_URL.rstrip('/')}/v1/produce?topic={topic}"
-    body = {"records": [{"value": payload}]}
+    envelope = {
+        "event_id": str(uuid.uuid4()),
+        "event_type": topic,
+        "event_version": 1,
+        "occurred_at": datetime.utcnow().isoformat() + "Z",
+        "correlation_id": payload.get("correlation_id", str(uuid.uuid4())),
+        "payload": payload
+    }
+
+    url = f"{PANDAPROXY_URL.rstrip('/')}/topics/{topic}"
+    body = {"records": [{"value": envelope}]}
+    headers = {"Content-Type": "application/vnd.kafka.json.v2+json"}
     try:
-        res = requests.post(url, json=body, timeout=2)
+        res = requests.post(url, json=body, headers=headers, timeout=2)
         res.raise_for_status()
         LOG.info("Published event to %s", topic)
     except Exception as e:

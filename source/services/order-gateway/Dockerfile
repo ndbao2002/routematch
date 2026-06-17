@@ -9,10 +9,10 @@ COPY pyproject.toml uv.lock* /app/
 RUN uv sync --no-dev --no-install-project || true
 
 # Copy package sources
-COPY ./order_gateway /app/order_gateway
+COPY ./app /app/app
 
 ENV REDIS_HOST=redis
 ENV REDIS_PORT=6379
 ENV REDIS_TTL=300
 
-CMD ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uv", "run", "uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8080"]

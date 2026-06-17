@@ -180,6 +180,55 @@ services:
     networks:
       - routematch-net
 
+  dispatch-engine:
+    build:
+      context: ../
+      dockerfile: services/dispatch-engine/Dockerfile
+    container_name: routematch_ms_dispatch_engine
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - REDIS_ADDR=redis:6379
+      - DB_CONN_STR=postgres://postgres:postgres@db:5432/routematch?sslmode=disable
+      - OFFER_TIMEOUT_SECONDS=15
+      - MAX_ATTEMPTS=3
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - routematch-net
+
+  order-gateway:
+    build:
+      context: ../services/order-gateway
+      dockerfile: Dockerfile
+    container_name: routematch_ms_order_gateway
+    ports:
+      - "9000:8080"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_TTL=300
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=routematch
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - PANDAPROXY_URL=http://kafka:8082
+      - KAFKA_BROKERS=kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - routematch-net
+
 networks:
   routematch-net:
     driver: bridge

@@ -42,9 +42,7 @@ type DriverCandidate struct {
 }
 
 func (c *RedisClient) GetCandidateDrivers(ctx context.Context, lat, lon float64, vehicleType string, limit int32) ([]DriverCandidate, error) {
-	latRad := lat * math.Pi / 180.0
-	lonRad := lon * math.Pi / 180.0
-	coord := h3.GeoCoord{Latitude: latRad, Longitude: lonRad}
+	coord := h3.GeoCoord{Latitude: lat, Longitude: lon}
 	centerCell := h3.FromGeo(coord, 8)
 
 	var candidateIDs []string
@@ -151,9 +149,7 @@ func (c *RedisClient) GetCandidateDrivers(ctx context.Context, lat, lon float64,
 }
 
 func (c *RedisClient) UpdateDriverLocation(ctx context.Context, driverID string, lat, lon float64) error {
-	latRad := lat * math.Pi / 180.0
-	lonRad := lon * math.Pi / 180.0
-	coord := h3.GeoCoord{Latitude: latRad, Longitude: lonRad}
+	coord := h3.GeoCoord{Latitude: lat, Longitude: lon}
 	cell := h3.FromGeo(coord, 8)
 	h3Str := fmt.Sprintf("%x", cell)
 
@@ -199,9 +195,7 @@ func (c *RedisClient) GetBatchCandidateDrivers(ctx context.Context, vehicleType 
 
 	// 1. Map all pickup coordinates and expand rings, collecting unique H3 cells
 	for _, order := range orders {
-		latRad := order.PickupLat * math.Pi / 180.0
-		lonRad := order.PickupLon * math.Pi / 180.0
-		coord := h3.GeoCoord{Latitude: latRad, Longitude: lonRad}
+		coord := h3.GeoCoord{Latitude: order.PickupLat, Longitude: order.PickupLon}
 		centerCell := h3.FromGeo(coord, 8)
 
 		for k := 0; k <= 3; k++ {
